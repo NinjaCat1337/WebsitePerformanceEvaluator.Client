@@ -1,5 +1,13 @@
 <template>
   <div class="field">
+    <div>
+      <pure-vue-chart
+        :points="this.graphData"
+        :width="800"
+        :height="200"
+        :show-values="true"
+      />
+    </div>
     <input type="text" id="urlRequest" v-model="url" />
     <button class="btn-main-dark btn-main-hover-green mr-1" @click="getSiteMap">Go</button>
     <hr />
@@ -38,6 +46,7 @@
 
 <script>
 import Axios from "axios";
+import PureVueChart from "pure-vue-chart";
 
 export default {
   data() {
@@ -46,8 +55,12 @@ export default {
       siteMap: [],
       sites: [],
       urlResponseTimes: [],
-      siteTestResults: []
+      siteTestResults: [],
+      graphData: []
     };
+  },
+  components: {
+    PureVueChart
   },
   methods: {
     getSiteMap() {
@@ -62,14 +75,14 @@ export default {
                 SiteUrl: this.url,
                 UrlResponseTimes: this.urlResponseTimes
               };
-              Axios.post(`/testresults/`, testResult).then(
-                  response => {
-                      if (response.status == 200){
-                          this.loadSites();
-                          this.loadSiteTestResults(response.data);
-                      }
-                  }
-              );
+              this.responseTimeToGraph();
+              console.log(this.graphData);
+              Axios.post(`/testresults/`, testResult).then(response => {
+                if (response.status == 200) {
+                  this.loadSites();
+                  this.loadSiteTestResults(response.data);
+                }
+              });
             }
           });
         }
@@ -80,6 +93,15 @@ export default {
         if (response.status == 200) {
           this.siteTestResults = response.data.siteMapUrls;
         }
+      });
+    },
+    responseTimeToGraph() {
+      this.urlResponseTimes.forEach(element => {
+        const newElement = {
+          label: element.url,
+          value: element.responseTimeMilliseconds
+        };
+        this.graphData.push(newElement);
       });
     },
     loadSites() {
